@@ -1,0 +1,209 @@
+**1. Data Understanding-
+Identify all data quality issues present in the dataset that can cause problems during data loading.**
+- | Order_ID | Customer_ID | Sales_Amount   | Order_Date |
+| -------- | ----------- | -------------- | ---------- |
+| O101     | C001        | 4500           | 12-01-2024 |
+| O102     | C002        | Null           | 15-01-2024 |
+| O103     | C003        | 3200           | 2024/01/18 |
+| O101     | C001        | 4500           | 12-01-2024 |
+| O104     | C004        | Three Thousand | 20-01-2024 |
+| O105     | C005        | 5100           | 25-01-2024 |
+   
+  **Data Quality Issues:**
+
+  - Duplicate Primary Key (O101 repeated)
+
+  - Missing value in Sales_Amount (Null)
+
+  - Invalid data type in Sales_Amount ("Three Thousand")
+
+  - Multiple date formats (DD-MM-YYYY and YYYY/MM/DD)
+
+  - Duplicate full record (O101 appears twice)
+
+**2. Primary Key Validation -**
+**Assume Order_ID is the Primary Key.**
+
+**a) Is the dataset violating the Primary Key rule?**
+
+**b) Which record(s) cause this violation?**
+- a) yes
+- b) Order_ID O101 appears twice.
+
+  This breaks uniqueness rule.
+
+**3. Missing Value Analysis -
+Which column(s) contain missing values?**
+
+**a) List the affected records**
+
+**b) Explain why loading these records without handling missing values is risky**
+- **a) Affected Record:**
+
+  - O102 (Sales_Amount = Null)
+
+- **b) Why risky?**
+
+  - Total sales calculation will be incorrect
+
+  - May cause load failure if column is NOT NULL
+
+  - BI dashboards may treat it as 0 or ignore it  
+
+**4. Data Type Validation -
+Identify records where Sales_Amount violates expected data type rules.**
+
+**a) Which record(s) will fail numeric validation?**
+
+**b) What would happen if this dataset is loaded into a SQL table with Sales_Amount as DECIMAL?**
+- **a) Which record fails numeric validation?**
+
+  - O104 → "Three Thousand"
+
+  **b) What happens if loaded as DECIMAL?**
+
+  - SQL will throw conversion error
+
+  - Load may fail
+
+  - That row may be rejected
+
+**5. Date Format Consistency -
+The Order_Date column has multiple formats.**
+
+**a) List all date formats present in the dataset**
+
+**b) Why is this a problem during data loading?**
+- **a) Date formats present:**
+
+  - 12-01-2024 (DD-MM-YYYY)
+
+  - 2024/01/18 (YYYY/MM/DD)
+
+  **b) Why is this a problem?**
+
+  - Database expects one standard format
+
+  - Wrong parsing can change month/day
+
+  - May cause load failure
+
+**6. Load Readiness Decision -
+Based on the dataset condition:**
+
+**a) Should this dataset be loaded directly into the database? (Yes/No)**
+
+**b) Justify your answer with at least three reasons**
+- **a) Should it be loaded directly?**
+
+  - No.
+
+  **b) Reasons:**
+
+  - Duplicate primary key
+
+  - Invalid numeric value
+
+  - Missing sales amount
+
+  - Inconsistent date formats
+
+  - Dataset must be cleaned first.
+
+**7. Pre-Load Validation Checklist -
+List the exact pre-load validation checks you would perform on this dataset before loading.**
+- Before loading:
+
+  1. Check Primary Key uniqueness
+
+  2. Check NULL values in mandatory columns
+
+  3. Validate numeric fields (Sales_Amount)
+
+  4. Validate date format consistency
+
+  5. Remove duplicate rows
+
+  6. Trim spaces
+
+  7. Check column data types match schema
+
+**8. Cleaning Strategy -
+Describe the step-by-step cleaning actions required to make this dataset load-ready.**
+- 1. Remove duplicate Order_ID (keep latest or first record)
+
+  2. Replace Null Sales_Amount
+
+  - Either remove record
+
+  - Or fill using business rule
+
+  3. Convert "Three Thousand" → 3000
+
+  4. Standardize date format to YYYY-MM-DD
+
+  5. Validate data types again
+
+  6. Final QA check
+
+  7. Load into staging table
+
+  8. Then move to final table
+
+**9. Loading Strategy Selection -
+Assume this dataset represents daily sales data.**
+
+**a) Should a Full Load or Incremental Load be used?**
+
+**b) Justify your choice.**
+- **a) Full Load or Incremental?**
+
+  - Incremental Load.
+
+  **b) Why?**
+
+  - Data represents daily sales
+
+  - Only new records need to be added
+
+  - Faster and efficient
+
+  - Reduces duplication risk
+
+**10. BI Impact Scenario -
+Assume this dataset was loaded without cleaning and connected to a BI dashboard.**
+
+**a) What incorrect results might appear in Total Sales KPI?**
+
+**b) Which records specifically would cause misleading insights?**
+
+**c) Why would BI tools not detect these issues automatically?**
+- If loaded without cleaning:
+
+  **a) Incorrect Total Sales KPI**
+
+  Problems:
+
+  - Null value ignored
+
+  - "Three Thousand" excluded
+
+  - Duplicate O101 counted twice
+
+  Total sales would be wrong.
+
+  **b) Misleading records:**
+
+  1. O101 (duplicate → double counting)
+
+  2. O102 (Null sales)
+
+  3. O104 (invalid numeric)
+
+  **c) Why BI tools won’t detect automatically?**
+
+  - BI tools assume database is clean
+
+  - They calculate based on stored data
+
+  - They don’t validate business rules automatically
